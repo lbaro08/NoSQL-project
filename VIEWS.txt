@@ -1,0 +1,132 @@
+db.createView(
+  "main_page_films",  // nombre de la vista que quieres crear
+  "films",              // colección base
+  [
+    {
+      $lookup: {
+        from: "reviews",
+        localField: "_id",
+        foreignField: "id_pelicula_serie",
+        as: "reseñas"
+      }
+    },
+    {
+      $addFields: {
+        promedio_calificacion: { $avg: "$reseñas.calificacion" },
+        total_reseñas: { $size: "$reseñas" }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        nombre: "$titulo",
+        tipo: 1,
+        sinopsis: 1,
+        año: "$año_lanzamiento",
+        genero: "$generos",
+        promedio_calificacion: 1,
+        total_reseñas: 1
+      }
+    }
+  ]
+)
+
+
+db.createView(
+  "films_full_details",
+  "films",
+  [
+    // 1. Lookup de reseñas con usuario incluido
+    {
+      $lookup: {
+        from: "reviews",
+        let: { film_id: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$id_pelicula_serie", "$$film_id"] } } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "id_usuario",
+              foreignField: "_id",
+              as: "usuario_info"
+            }
+          },
+          {
+            $addFields: {
+              nombre_usuario: { $arrayElemAt: ["$usuario_info.nombre_usuario", 0] }
+            }
+          },
+          {
+            $project: {
+              usuario_info: 0  // eliminamos el array interno
+            }
+          }
+        ],
+        as: "reseñas"
+      }
+    },
+    // 2. Lookup de directores
+    {
+      $lookup: {
+        from: "actors_directors",
+        localField: "directores",
+        foreignField: "_id",
+        as: "directores_info"
+      }
+    },
+    // 3. Lookup de elenco
+    {
+      $lookup: {
+        from: "actors_directors",
+        let: { actor_ids: "$elenco.actor_id" },
+        pipeline: [
+          { $match: { $expr: { $in: ["$_id", "$$actor_ids"] } } }
+        ],
+        as: "elenco_info"
+      }
+    },
+    // 4. Proyección final
+    {
+      $project: {
+        _id: 1,
+        nombre: "$titulo",
+        tipo: 1,
+        sinopsis: 1,
+        año: "$año_lanzamiento",
+        genero: "$generos",
+        directores: { $map: { input: "$directores_info", as: "d", in: "$$d.nombre_completo" } },
+        elenco: {
+          $map: {
+            input: "$elenco",
+            as: "e",
+            in: {
+              nombre: {
+                $let: {
+                  vars: {
+                    matched: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$elenco_info",
+                            as: "info",
+                            cond: { $eq: ["$$info._id", "$$e.actor_id"] }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  in: "$$matched.nombre_completo"
+                }
+              },
+              personaje: "$$e.personaje"
+            }
+          }
+        },
+        reseñas: 1,  // ya vienen completas con nombre_usuario
+        promedio_calificacion: { $avg: "$reseñas.calificacion" },
+        total_reseñas: { $size: "$reseñas" }
+      }
+    }
+  ]
+)
