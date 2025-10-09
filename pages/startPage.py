@@ -4,6 +4,7 @@ from database import films
 from pages.detailMovie import FrameDetailMovie
 from pages.addMovie import FrameAddMovie
 from pages.profile import FrameProfile
+from pages.actors_directors import FrameActors
 from functions.session import Session
 from tkinter import messagebox
 class FrameStartPage(tk.Frame):
@@ -30,6 +31,16 @@ class FrameStartPage(tk.Frame):
                   bg="#FFD700", fg="#1E1E1E", activebackground="#FFC107",
                   command=self.ver_cuenta).pack(side="right", padx=20)
         
+        # Botón Actores y Directores
+        tk.Button(navbar, text="Actores", font=("Helvetica", 12, "bold"),
+                  bg="#3E8E41", fg="white", activebackground="#4CAF50",
+                  command=self.ver_actores).pack(side="right", padx=20)
+
+        # Botón Directores
+        tk.Button(navbar, text="Directores", font=("Helvetica", 12, "bold"),
+                  bg="#3E8E41", fg="white", activebackground="#4CAF50",
+                  command=self.ver_directores).pack(side="right", padx=20)
+
         # Canvas y scrollbar
         self.canvas = tk.Canvas(self, bg="#FFFB00", highlightthickness=0, width=1280, height=720)
         self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
@@ -115,3 +126,25 @@ class FrameStartPage(tk.Frame):
         ventana_add.configure(bg="#1E1E1E")
         frame_add = FrameAddMovie(ventana_add)
         frame_add.pack(fill="both", expand=True)
+
+    def ver_actores(self):
+        ventana_actores = tk.Toplevel(self)
+        ventana_actores.geometry("1280x720")
+        ventana_actores.title("Actores")
+        ventana_actores.configure(bg="#121212")
+
+        actores = FrameActors(ventana_actores)
+        actores.pack(fill="both", expand=True)
+
+    def ver_directores(self):
+        ventana_directores = tk.Toplevel(self)
+        ventana_directores.geometry("1280x720")
+        ventana_directores.title("Directores")
+        ventana_directores.configure(bg="#121212")
+
+        from pages.directors import FrameDirectors
+        frame = FrameDirectors(ventana_directores)
+        frame.pack(fill="both", expand=True)
+
+        # Aquí puedes llamar a la función para mostrar directores, si es necesario
+        # frame.mostrar_directores()
