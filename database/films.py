@@ -21,5 +21,11 @@ def get(operacion,id = None):
 
 
 
+def put(data):
+    collection = conection.conect('films')
+    
+    result = collection.insert_one(data)
+    print(f"🎬 Película/Serie agregada: {data['titulo']}, ID: {result.inserted_id}")
+    return str(result.inserted_id)
     
 
