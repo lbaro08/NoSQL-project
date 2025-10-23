@@ -4,6 +4,7 @@ from pages.register import FrameRegister
 from pages.startPage import FrameStartPage
 from pages.detailMovie import FrameDetailMovie
 
+
 class FramePrincipal(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)

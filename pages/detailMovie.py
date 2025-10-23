@@ -14,6 +14,7 @@ class FrameDetailMovie(tk.Frame):
         print("Sera quie si?",movie_id)
         self.movie_id = movie_id
         self.movie_data = films.get('filmDetailsOpc',movie_id)
+        print(self.movie_data)
 
         # Contenedor principal
         self.content_frame = tk.Frame(self, bg="#121212")
