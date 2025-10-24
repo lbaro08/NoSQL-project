@@ -5,47 +5,59 @@ import bcrypt
 
 class FrameRegister(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+        super().__init__(parent, bg="#121212")
         self.controller = controller
-        self.configure(bg="#f0f0f0")
+
+        # Contenedor central
+        container = tk.Frame(self, bg="#1E1E1E", bd=0, relief="ridge")
+        container.place(relx=0.5, rely=0.5, anchor="center")
+        container.config(width=450, height=500)
 
         # Título
-        label_titulo = tk.Label(self, text="Registro de Usuario", font=("Arial", 18, "bold"), bg="#f0f0f0")
-        label_titulo.pack(pady=20)
+        label_titulo = tk.Label(container, text="Registro de Usuario", font=("Helvetica", 22, "bold"),
+                                bg="#1E1E1E", fg="#FFD700")
+        label_titulo.pack(pady=(30, 30))
 
         # Usuario
-        label_usuario = tk.Label(self, text="Usuario", font=("Arial", 12), bg="#f0f0f0")
-        label_usuario.pack(pady=(10,0))
-        self.entry_usuario = tk.Entry(self, font=("Arial", 12))
-        self.entry_usuario.pack(pady=5)
+        tk.Label(container, text="Usuario", font=("Helvetica", 12), bg="#1E1E1E", fg="#CCCCCC").pack(anchor="w", padx=40, pady=(5,2))
+        self.entry_usuario = tk.Entry(container, font=("Helvetica", 12), bg="#2C2C2C", fg="white",
+                                      bd=0, relief="flat", insertbackground="white")
+        self.entry_usuario.pack(pady=(0,10), ipady=8, ipadx=10, padx=40)
 
         # Correo
-        label_correo = tk.Label(self, text="Correo", font=("Arial", 12), bg="#f0f0f0")
-        label_correo.pack(pady=(10,0))
-        self.entry_correo = tk.Entry(self, font=("Arial", 12))
-        self.entry_correo.pack(pady=5)
+        tk.Label(container, text="Correo", font=("Helvetica", 12), bg="#1E1E1E", fg="#CCCCCC").pack(anchor="w", padx=40, pady=(5,2))
+        self.entry_correo = tk.Entry(container, font=("Helvetica", 12), bg="#2C2C2C", fg="white",
+                                     bd=0, relief="flat", insertbackground="white")
+        self.entry_correo.pack(pady=(0,10), ipady=8, ipadx=10, padx=40)
 
         # Contraseña
-        label_contraseña = tk.Label(self, text="Contraseña", font=("Arial", 12), bg="#f0f0f0")
-        label_contraseña.pack(pady=(10,0))
-        self.entry_contraseña = tk.Entry(self, font=("Arial", 12), show="*")
-        self.entry_contraseña.pack(pady=5)
+        tk.Label(container, text="Contraseña", font=("Helvetica", 12), bg="#1E1E1E", fg="#CCCCCC").pack(anchor="w", padx=40, pady=(5,2))
+        self.entry_contraseña = tk.Entry(container, font=("Helvetica", 12), show="*", bg="#2C2C2C", fg="white",
+                                        bd=0, relief="flat", insertbackground="white")
+        self.entry_contraseña.pack(pady=(0,10), ipady=8, ipadx=10, padx=40)
 
         # Confirmar contraseña
-        label_confirm = tk.Label(self, text="Confirmar Contraseña", font=("Arial", 12), bg="#f0f0f0")
-        label_confirm.pack(pady=(10,0))
-        self.entry_confirm = tk.Entry(self, font=("Arial", 12), show="*")
-        self.entry_confirm.pack(pady=5)
+        tk.Label(container, text="Confirmar Contraseña", font=("Helvetica", 12), bg="#1E1E1E", fg="#CCCCCC").pack(anchor="w", padx=40, pady=(5,2))
+        self.entry_confirm = tk.Entry(container, font=("Helvetica", 12), show="*", bg="#2C2C2C", fg="white",
+                                      bd=0, relief="flat", insertbackground="white")
+        self.entry_confirm.pack(pady=(0,20), ipady=8, ipadx=10, padx=40)
 
         # Botón registrar
-        btn_registrar = tk.Button(self, text="Registrar", font=("Arial", 12, "bold"), bg="#2196f3", fg="white",
-                                  activebackground="#1e88e5", padx=10, pady=5, command=self.registrar)
-        btn_registrar.pack(pady=20)
+        btn_registrar = tk.Button(container, text="Registrar", font=("Helvetica", 12, "bold"),
+                                  bg="#3E8E41", fg="white", bd=0, relief="flat",
+                                  activebackground="#45a049", activeforeground="white",
+                                  command=self.registrar)
+        btn_registrar.pack(pady=(10,15), ipadx=10, ipady=8)
 
         # Botón volver al login
-        btn_login = tk.Button(self, text="Volver al Login", font=("Arial", 10), fg="#2196f3", bg="#f0f0f0",
-                              activebackground="#e0e0e0", command=lambda: controller.mostrar_frame("FrameLogin"))
+        btn_login = tk.Button(container, text="Volver al Login", font=("Helvetica", 11, "underline"),
+                              bg="#1E1E1E", fg="#FFD700", bd=0, relief="flat",
+                              activebackground="#1E1E1E", activeforeground="#FFC107",
+                              command=lambda: controller.mostrar_frame("FrameLogin"))
         btn_login.pack(pady=5)
+
+        # Footer
+        tk.Label(container, text="© 2025 PopRate", font=("Helvetica", 9), bg="#1E1E1E", fg="#777777").pack(side="bottom", pady=10)
 
     def registrar(self):
         usuario = self.entry_usuario.get()
@@ -53,7 +65,7 @@ class FrameRegister(tk.Frame):
         contraseña = self.entry_contraseña.get()
         confirm = self.entry_confirm.get()
 
-        # Validaciones simples
+        # Validaciones
         if not usuario or not correo or not contraseña:
             messagebox.showerror("Error", "Todos los campos son obligatorios")
             return
@@ -62,23 +74,18 @@ class FrameRegister(tk.Frame):
             messagebox.showerror("Error", "Las contraseñas no coinciden")
             return
 
+        # Encriptar contraseña
+        contraseña = bcrypt.hashpw(contraseña.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-
-        ## process to submit to databse
-        contraseña = bcrypt.hashpw(contraseña.encode("utf-8"), bcrypt.gensalt())
-        contraseña = contraseña.decode("utf-8")
-
-        result = register.registrar(usuario,correo,contraseña)
-        if result==-1:
-            messagebox.showerror("Error", "El usuario o correo ya estan creados")
+        result = register.registrar(usuario, correo, contraseña)
+        if result == -1:
+            messagebox.showerror("Error", "El usuario o correo ya están registrados")
             return
-        elif result ==-2:
-            messagebox.showerror("Error", "Ocurrio un error en la peticion")
+        elif result == -2:
+            messagebox.showerror("Error", "Ocurrió un error en la petición")
             return
-        
-        # Aquí podrías guardar los datos en una base de datos
+
         messagebox.showinfo("Registro", f"Usuario {usuario} registrado correctamente")
-
 
         # Limpiar campos
         self.entry_usuario.delete(0, tk.END)

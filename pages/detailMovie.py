@@ -107,11 +107,35 @@ class FrameDetailMovie(tk.Frame):
 
         for r in self.reviews_data:
             card = tk.Frame(self.scrollable_frame, bg="#1E1E1E", bd=2, relief="ridge")
-            card.pack(fill="x", pady=10)
+            card.pack(fill="x", pady=10, padx=5)
+
             tk.Label(card, text=f'{r["nombre_usuario"]} - {r["calificacion"]} ⭐',
-                     font=("Arial", 18, "bold"), fg="#FFD700", bg="#1E1E1E").pack(anchor="w", padx=10, pady=(5,0))
+                    font=("Arial", 18, "bold"), fg="#FFD700", bg="#1E1E1E").pack(anchor="w", padx=10, pady=(5,0))
+
             tk.Label(card, text=r["texto_reseña"], font=("Arial", 16),
-                     fg="white", bg="#1E1E1E", wraplength=1100, justify="left").pack(anchor="w", padx=10, pady=(0,5))
+                    fg="white", bg="#1E1E1E", wraplength=1100, justify="left").pack(anchor="w", padx=10, pady=(0,5))
+
+            # ----- Botón de like -----
+            like_frame = tk.Frame(card, bg="#1E1E1E")
+            like_frame.pack(anchor="e", padx=10, pady=(0,5))
+
+            votos = r.get("votos_utilidad", 0)
+            votos_var = tk.IntVar(value=votos)
+
+            def votar_resena(review=r, var=votos_var):
+                user_id = Session.user.get("_id")
+                #result = reviews.likeReview(user_id, review["_id"])
+                print(user_id),
+                print(review["_id"])
+                result =2
+                if result:
+                    var.set(var.get() + 1)
+                    review["votos_utilidad"] = var.get()
+
+            tk.Button(like_frame, text="👍 Me gusta", font=("Arial", 12, "bold"),
+                    bg="#FFD700", fg="#121212", command=votar_resena).pack(side="left")
+            tk.Label(like_frame, textvariable=votos_var, font=("Arial", 12), fg="white", bg="#1E1E1E").pack(side="left", padx=5)
+
 
     def add_review(self):
         comentario = self.comentario_entry.get("1.0", "end").strip()

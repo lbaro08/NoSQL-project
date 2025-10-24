@@ -7,7 +7,6 @@ from pages.profile import FrameProfile
 from pages.actors_directors import FrameActors
 from functions.session import Session
 
-
 class FrameStartPage(tk.Frame):
     def __init__(self, parent, controller=None):
         super().__init__(parent, width=1280, height=720)
@@ -68,21 +67,19 @@ class FrameStartPage(tk.Frame):
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
         # ----- DERECHA: FILTROS -----
-        right_frame = tk.Frame(content_frame, bg="#FFFB00", width=300)
-        right_frame.pack(side="right", fill="y")
+        self.right_frame = tk.Frame(content_frame, bg="#FFFB00", width=300)
+        self.right_frame.pack(side="right", fill="y")
 
-        tk.Label(right_frame, text="🎬 Filtros", bg="#FFFB00", fg="black",
+        tk.Label(self.right_frame, text="🎬 Filtros", bg="#FFFB00", fg="black",
                  font=("Helvetica", 16, "bold")).pack(pady=15)
 
         # --- Filtro por género ---
-        # --- Filtro por género ---
-        tk.Label(right_frame, text="Género:", bg="#FFFB00", fg="black",
+        tk.Label(self.right_frame, text="Género:", bg="#FFFB00", fg="black",
                  font=("Helvetica", 12)).pack(anchor="w", padx=15)
 
         # Obtener géneros dinámicamente desde films
         peliculas = films.get("mainPage")
         generos_unicos = set()
-
         for peli in peliculas:
             genero = peli.get("genero", [])
             if isinstance(genero, list):
@@ -93,67 +90,102 @@ class FrameStartPage(tk.Frame):
         generos_ordenados = sorted(list(generos_unicos))
         opciones_genero = ["Todos"] + generos_ordenados
 
-        # Crear combobox con géneros dinámicos
         self.genero_var = tk.StringVar(value="Todos")
-        self.combo_genero = ttk.Combobox(right_frame, textvariable=self.genero_var,
+        self.combo_genero = ttk.Combobox(self.right_frame, textvariable=self.genero_var,
                                          values=opciones_genero, state="readonly")
         self.combo_genero.pack(fill="x", padx=15, pady=5)
 
-
         # --- Filtro por calificación ---
-        tk.Label(right_frame, text="Calificación mínima:", bg="#FFFB00", fg="black",
+        tk.Label(self.right_frame, text="Calificación mínima:", bg="#FFFB00", fg="black",
                  font=("Helvetica", 12)).pack(anchor="w", padx=15, pady=(10, 0))
         self.rating_var = tk.DoubleVar(value=0.0)
-        tk.Scale(right_frame, from_=0, to=5, resolution=0.5,
+        tk.Scale(self.right_frame, from_=0, to=5, resolution=0.5,
                  orient="horizontal", variable=self.rating_var,
                  bg="#FFFB00", highlightthickness=0).pack(fill="x", padx=15, pady=5)
 
         # --- Botón de aplicar filtro ---
-        tk.Button(right_frame, text="Aplicar filtro", font=("Helvetica", 12, "bold"),
+        tk.Button(self.right_frame, text="Aplicar filtro", font=("Helvetica", 12, "bold"),
                   bg="black", fg="white", activebackground="#333",
                   command=self.aplicar_filtros).pack(pady=15)
 
-        # Cargar películas
+        # --- Cargar mejores películas/series ---
+        self.cargar_mejores()
+
+        # --- Cargar películas ---
         self.cargar_peliculas()
 
     # === FUNCIONES ===
-
     def aplicar_filtros(self):
         genero_sel = self.genero_var.get()
         calificacion_min = self.rating_var.get()
 
-        # Limpia las tarjetas actuales
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
         peliculas = films.get("mainPage")
-
         for peli in peliculas:
-            # Obtener y normalizar valores
-            promedio = peli.get("promedio_calificacion", 0.0)
-            if promedio is None:
-                promedio = 0.0  # Si viene None, se trata como 0.0
-
+            promedio = peli.get("promedio_calificacion", 0.0) or 0.0
             genero = peli.get("genero", "")
+            genero_texto = " ".join(genero).lower() if isinstance(genero, list) else str(genero).lower()
 
-            # Convertir el género a texto (si es lista)
-            if isinstance(genero, list):
-                genero_texto = " ".join(genero).lower()
-            else:
-                genero_texto = str(genero).lower()
-
-            # Aplicar filtro
             if (genero_sel == "Todos" or genero_sel.lower() in genero_texto) and float(promedio) >= calificacion_min:
                 self._crear_card(peli)
-
 
     def recargar_pagina(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
+
+        # Limpiar frames de mejores
+        for widget in self.right_frame.winfo_children():
+            if hasattr(widget, "_is_mejor"):
+                widget.destroy()
+
         self.actualizar_generos()
         self.cargar_peliculas()
-        
+        self.cargar_mejores()
+
         messagebox.showinfo("PopRate", "Página recargada correctamente ✅")
+
+    def cargar_mejores(self):
+        # Mejor película
+        mejor_peli = films.get("mostValoratedFilmOpc")
+        if mejor_peli:
+            frame_mejor = tk.Frame(self.right_frame, bg="#FFF8B0", bd=2, relief="solid")
+            frame_mejor._is_mejor = True
+            frame_mejor.pack(fill="x", padx=15, pady=5)
+
+            tk.Label(frame_mejor, text=mejor_peli.get("nombre", "Sin nombre"),
+                     font=("Helvetica", 13, "bold"), bg="#FFF8B0", fg="black", wraplength=250).pack(pady=(5, 0))
+
+            promedio = round(float(mejor_peli.get("promedio_calificacion", 0.0)), 1)
+            total = mejor_peli.get("total_reseñas", 0)
+            tk.Label(frame_mejor, text=f"⭐ {promedio}  |  {total} reseñas",
+                     font=("Helvetica", 11), bg="#FFF8B0", fg="#333").pack()
+            tk.Label(frame_mejor, text=f"Género: {', '.join(mejor_peli.get('genero', []))}",
+                     font=("Helvetica", 10), bg="#FFF8B0", fg="#333").pack()
+            tk.Button(frame_mejor, text="Ver más", font=("Helvetica", 10, "bold"),
+                      bg="#FFD700", fg="black", activebackground="#FFC107",
+                      command=lambda d=mejor_peli: self.ver_mas(d)).pack(pady=(5, 8))
+
+        # Mejor serie
+        mejor_serie = films.get("mostValoratedSerieOpc")
+        if mejor_serie:
+            frame_mejor_serie = tk.Frame(self.right_frame, bg="#FFF8B0", bd=2, relief="solid")
+            frame_mejor_serie._is_mejor = True
+            frame_mejor_serie.pack(fill="x", padx=15, pady=5)
+
+            tk.Label(frame_mejor_serie, text=mejor_serie.get("nombre", "Sin nombre"),
+                     font=("Helvetica", 13, "bold"), bg="#FFF8B0", fg="black", wraplength=250).pack(pady=(5, 0))
+
+            promedio_serie = round(float(mejor_serie.get("promedio_calificacion", 0.0)), 1)
+            total_serie = mejor_serie.get("total_reseñas", 0)
+            tk.Label(frame_mejor_serie, text=f"⭐ {promedio_serie}  |  {total_serie} reseñas",
+                     font=("Helvetica", 11), bg="#FFF8B0", fg="#333").pack()
+            tk.Label(frame_mejor_serie, text=f"Género: {', '.join(mejor_serie.get('genero', []))}",
+                     font=("Helvetica", 10), bg="#FFF8B0", fg="#333").pack()
+            tk.Button(frame_mejor_serie, text="Ver más", font=("Helvetica", 10, "bold"),
+                      bg="#FFD700", fg="black", activebackground="#FFC107",
+                      command=lambda d=mejor_serie: self.ver_mas(d)).pack(pady=(5, 8))
 
     def cargar_peliculas(self):
         peliculas = films.get("mainPage")
@@ -177,23 +209,18 @@ class FrameStartPage(tk.Frame):
                 promedio = round(float(promedio), 1)
             except (TypeError, ValueError):
                 promedio = 0.0
-
             tk.Label(frame_rating, text="⭐", font=("Helvetica", 14),
                      fg="#FFD700", bg="#1e1e1e").pack(side="left")
-            tk.Label(frame_rating, text=f"{promedio:.1f}",
-                     font=("Helvetica", 12, "bold"),
+            tk.Label(frame_rating, text=f"{promedio:.1f}", font=("Helvetica", 12, "bold"),
                      fg="#FFD700", bg="#1e1e1e").pack(side="left", padx=(5, 0))
         else:
-            tk.Label(frame_rating, text="Rate It!",
-                     font=("Helvetica", 15, "italic"),
+            tk.Label(frame_rating, text="Rate It!", font=("Helvetica", 15, "italic"),
                      fg="#AAAAAA", bg="#1e1e1e").pack(side="left")
 
         tk.Label(card, text=f"{'Película' if data['tipo'] == 1 else 'Serie'} | {data['año']}",
                  font=("Helvetica", 12), fg="#CCCCCC", bg="#1e1e1e").pack(anchor="w", padx=15)
-
         tk.Label(card, text=f"Género: {data['genero']}", font=("Helvetica", 12),
                  fg="#CCCCCC", bg="#1e1e1e").pack(anchor="w", padx=15)
-
         tk.Label(card, text=f"Sinopsis: {data['sinopsis']}", font=("Helvetica", 12),
                  fg="#EEEEEE", bg="#1e1e1e", wraplength=1200, justify="left").pack(anchor="w", padx=15, pady=(5, 10))
 
@@ -243,10 +270,8 @@ class FrameStartPage(tk.Frame):
         FrameDirectors(ventana).pack(fill="both", expand=True)
 
     def actualizar_generos(self):
-        """Regenera dinámicamente el listado de géneros según las películas disponibles."""
         peliculas = films.get("mainPage")
         generos_unicos = set()
-
         for peli in peliculas:
             genero = peli.get("genero", [])
             if isinstance(genero, list):
@@ -257,8 +282,5 @@ class FrameStartPage(tk.Frame):
         generos_ordenados = sorted(list(generos_unicos))
         opciones_genero = ["Todos"] + generos_ordenados
 
-        # Actualiza los valores del combobox
         self.combo_genero["values"] = opciones_genero
-
-        # Reinicia la selección actual
         self.genero_var.set("Todos")
